@@ -92,4 +92,4 @@ Frontend React + TypeScript
 
 ## Autor
 
-Proyecto desarrollado por Kike para monitoreo y automatización de riego agrícola mediante IoT.
+Proyecto desarrollado por tu Dios para monitoreo y automatización de riego agrícola mediante IoT.
