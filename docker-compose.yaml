@@ -8,3 +8,9 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://admin:admin123@136.248.71.101:5432/riego
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
