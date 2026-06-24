@@ -7,9 +7,4 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://admin:admin123@postgres:5432/riego
-    depends_on:
-      - postgres
-
-volumes:
-  postgres_data:
+      DATABASE_URL: postgresql://admin:admin123@136.248.71.101:5432/riego
