@@ -89,6 +89,33 @@ def borrar_historial():
 
     finally:
         db.close()
+@app.get("/resumen")
+def resumen():
+
+    db = SessionLocal()
+
+    try:
+
+        registros = db.query(Telemetria).all()
+
+        if not registros:
+            return {}
+
+        temperatura = sum(r.temperatura for r in registros) / len(registros)
+        humedad = sum(r.humedad for r in registros) / len(registros)
+        bateria = sum(r.bateria for r in registros) / len(registros)
+
+        nodos = len(set(r.nodo_id for r in registros))
+
+        return {
+            "temperatura_promedio": round(temperatura, 2),
+            "humedad_promedio": round(humedad, 2),
+            "bateria_promedio": round(bateria, 2),
+            "nodos": nodos
+        }
+
+    finally:
+        db.close()
 @app.get("/historial")
 def obtener_historial():
 
@@ -113,6 +140,24 @@ def obtener_historial():
             }
             for r in registros
         ]
+
+    finally:
+        db.close()
+@app.get("/historial/{nodo_id}")
+def historial_nodo(nodo_id: int):
+
+    db = SessionLocal()
+
+    try:
+
+        registros = (
+            db.query(Telemetria)
+            .filter(Telemetria.nodo_id == nodo_id)
+            .order_by(Telemetria.fecha.asc())
+            .all()
+        )
+
+        return registros
 
     finally:
         db.close()

@@ -13,8 +13,8 @@ import {
 } from "recharts";
 
 interface Telemetria {
-  id?: number;
-  nodo_id?: number;
+  id: number;
+  nodo_id: number;
   temperatura: number;
   humedad: number;
   bateria: number;
@@ -22,243 +22,261 @@ interface Telemetria {
   fecha: string;
 }
 
+interface Resumen {
+  temperatura_promedio: number;
+  humedad_promedio: number;
+  bateria_promedio: number;
+  nodos: number;
+}
+
 const API = "http://136.248.71.101:8000";
 
 function App() {
-  const [estado, setEstado] = useState<Telemetria>({
-    temperatura: 0,
-    humedad: 0,
-    bateria: 0,
-    valvula: "desconocida",
-    fecha: "",
+  const [resumen, setResumen] = useState<Resumen>({
+    temperatura_promedio: 0,
+    humedad_promedio: 0,
+    bateria_promedio: 0,
+    nodos: 0,
   });
 
-  const [historial, setHistorial] = useState<Telemetria[]>([]);
+  const [historialGlobal, setHistorialGlobal] = useState<Telemetria[]>([]);
+  const [historialNodo, setHistorialNodo] = useState<Telemetria[]>([]);
+  const [nodoSeleccionado, setNodoSeleccionado] = useState<number>(1);
 
-  const cargarEstado = async () => {
+  const cargarResumen = async () => {
     try {
-      const res = await axios.get(`${API}/estado`);
-      setEstado(res.data);
+      const res = await axios.get(`${API}/resumen`);
+      setResumen(res.data);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const cargarHistorial = async () => {
+  const cargarHistorialGlobal = async () => {
     try {
       const res = await axios.get(`${API}/historial`);
-      setHistorial(res.data);
+      setHistorialGlobal(res.data);
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const cargarHistorialNodo = async (nodo: number) => {
+    try {
+      const res = await axios.get(
+        `${API}/historial/${nodo}`
+      );
+
+      setHistorialNodo(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const cargarTodo = async () => {
+    await cargarResumen();
+    await cargarHistorialGlobal();
+    await cargarHistorialNodo(nodoSeleccionado);
   };
 
   useEffect(() => {
-    cargarEstado();
-    cargarHistorial();
+    cargarTodo();
 
     const timer = setInterval(() => {
-      cargarEstado();
-      cargarHistorial();
+      cargarTodo();
     }, 5000);
 
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    cargarHistorialNodo(nodoSeleccionado);
+  }, [nodoSeleccionado]);
+
+  const nodosDisponibles = [
+    ...new Set(
+      historialGlobal.map((item) => item.nodo_id)
+    ),
+  ];
+
   return (
     <div className="min-h-screen bg-slate-100 p-6">
 
-      <div className="max-w-7xl mx-auto">
+      <h1 className="text-4xl font-bold mb-8">
+        Sistema de Riego IoT
+      </h1>
 
-        <h1 className="text-4xl font-bold mb-8 text-center">
-          Sistema de Riego IoT
-        </h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-gray-500 mb-2">
+            🌡 Temperatura Promedio
+          </h2>
 
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-gray-500 mb-2">
-              🌡 Temperatura
-            </h2>
-
-            <p className="text-4xl font-bold">
-              {estado.temperatura} °C
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-gray-500 mb-2">
-              💧 Humedad
-            </h2>
-
-            <p className="text-4xl font-bold">
-              {estado.humedad} %
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-gray-500 mb-2">
-              🔋 Batería
-            </h2>
-
-            <p className="text-4xl font-bold">
-              {estado.bateria} %
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-gray-500 mb-2">
-              🚰 Válvula
-            </h2>
-
-            <p className="text-3xl font-bold">
-              {estado.valvula}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6">
-            <h2 className="text-gray-500 mb-2">
-              📡 Nodo
-            </h2>
-
-            <p className="text-4xl font-bold">
-              {historial.length > 0
-                ? historial[historial.length - 1].nodo_id
-                : "-"}
-            </p>
-          </div>
-
+          <p className="text-4xl font-bold">
+            {resumen.temperatura_promedio} °C
+          </p>
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
-
-          <h2 className="text-2xl font-bold mb-6">
-            Historial de Sensores
+          <h2 className="text-gray-500 mb-2">
+            💧 Humedad Promedio
           </h2>
 
-          <div style={{ width: "100%", height: 500 }}>
-            <ResponsiveContainer>
-              <LineChart data={historial}>
-                <CartesianGrid strokeDasharray="3 3" />
-
-                <XAxis
-                  dataKey="fecha"
-                  tickFormatter={(value) =>
-                    new Date(value).toLocaleTimeString()
-                  }
-                />
-
-                <YAxis />
-
-                <Tooltip
-                  labelFormatter={(value) =>
-                    new Date(value as string).toLocaleString()
-                  }
-                />
-
-                <Legend />
-
-                <Line
-                  type="monotone"
-                  dataKey="temperatura"
-                  name="Temperatura °C"
-                  stroke="#ef4444"
-                  strokeWidth={3}
-                />
-
-                <Line
-                  type="monotone"
-                  dataKey="humedad"
-                  name="Humedad %"
-                  stroke="#3b82f6"
-                  strokeWidth={3}
-                />
-
-                <Line
-                  type="monotone"
-                  dataKey="bateria"
-                  name="Batería %"
-                  stroke="#22c55e"
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
+          <p className="text-4xl font-bold">
+            {resumen.humedad_promedio} %
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow p-6 mt-8">
-
-          <h2 className="text-2xl font-bold mb-4">
-            Últimos Registros
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-gray-500 mb-2">
+            🔋 Batería Promedio
           </h2>
 
-          <div className="overflow-x-auto">
+          <p className="text-4xl font-bold">
+            {resumen.bateria_promedio} %
+          </p>
+        </div>
 
-            <table className="w-full">
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-gray-500 mb-2">
+            📡 Nodos Activos
+          </h2>
 
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">ID</th>
-                  <th className="text-left p-2">Nodo</th>
-                  <th className="text-left p-2">Temperatura</th>
-                  <th className="text-left p-2">Humedad</th>
-                  <th className="text-left p-2">Batería</th>
-                  <th className="text-left p-2">Válvula</th>
-                  <th className="text-left p-2">Fecha</th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                {[...historial]
-                  .reverse()
-                  .slice(0, 10)
-                  .map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b"
-                    >
-                      <td className="p-2">
-                        {item.id}
-                      </td>
-
-                      <td className="p-2">
-                        {item.nodo_id}
-                      </td>
-
-                      <td className="p-2">
-                        {item.temperatura}
-                      </td>
-
-                      <td className="p-2">
-                        {item.humedad}
-                      </td>
-
-                      <td className="p-2">
-                        {item.bateria}
-                      </td>
-
-                      <td className="p-2">
-                        {item.valvula}
-                      </td>
-
-                      <td className="p-2">
-                        {new Date(item.fecha)
-                          .toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
+          <p className="text-4xl font-bold">
+            {resumen.nodos}
+          </p>
         </div>
 
       </div>
+
+      <div className="bg-white rounded-xl shadow p-6 mb-8">
+
+        <h2 className="text-2xl font-bold mb-4">
+          Historial General
+        </h2>
+
+        <div style={{ width: "100%", height: 400 }}>
+          <ResponsiveContainer>
+            <LineChart data={historialGlobal}>
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="fecha"
+                tickFormatter={(value) =>
+                  new Date(value).toLocaleTimeString()
+                }
+              />
+
+              <YAxis />
+
+              <Tooltip
+                labelFormatter={(value) =>
+                  new Date(value).toLocaleString()
+                }
+              />
+
+              <Legend />
+
+              <Line
+                type="monotone"
+                dataKey="temperatura"
+                name="Temperatura"
+              />
+
+              <Line
+                type="monotone"
+                dataKey="humedad"
+                name="Humedad"
+              />
+
+              <Line
+                type="monotone"
+                dataKey="bateria"
+                name="Batería"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-6 mb-8">
+
+        <h2 className="text-2xl font-bold mb-4">
+          Sensores por Nodo
+        </h2>
+
+        <select
+          className="border rounded p-2"
+          value={nodoSeleccionado}
+          onChange={(e) =>
+            setNodoSeleccionado(Number(e.target.value))
+          }
+        >
+          {nodosDisponibles.map((nodo) => (
+            <option
+              key={nodo}
+              value={nodo}
+            >
+              Nodo {nodo}
+            </option>
+          ))}
+        </select>
+
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-6">
+
+        <h2 className="text-2xl font-bold mb-6">
+          Historial Nodo {nodoSeleccionado}
+        </h2>
+
+        <div style={{ width: "100%", height: 450 }}>
+          <ResponsiveContainer>
+            <LineChart data={historialNodo}>
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="fecha"
+                tickFormatter={(value) =>
+                  new Date(value).toLocaleTimeString()
+                }
+              />
+
+              <YAxis />
+
+              <Tooltip
+                labelFormatter={(value) =>
+                  new Date(value).toLocaleString()
+                }
+              />
+
+              <Legend />
+
+              <Line
+                type="monotone"
+                dataKey="temperatura"
+                name="Temperatura"
+              />
+
+              <Line
+                type="monotone"
+                dataKey="humedad"
+                name="Humedad"
+              />
+
+              <Line
+                type="monotone"
+                dataKey="bateria"
+                name="Batería"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+      </div>
+
     </div>
   );
 }
