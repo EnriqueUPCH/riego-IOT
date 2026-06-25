@@ -74,7 +74,21 @@ def recibir(datos: dict):
     finally:
         db.close()
 
+@app.delete("/historial")
+def borrar_historial():
 
+    db = SessionLocal()
+
+    try:
+        db.query(Telemetria).delete()
+        db.commit()
+
+        return {
+            "mensaje": "Historial eliminado"
+        }
+
+    finally:
+        db.close()
 @app.get("/historial")
 def obtener_historial():
 
