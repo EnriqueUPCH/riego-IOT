@@ -55,6 +55,7 @@ def recibir(datos: dict):
 
     try:
         registro = Telemetria(
+            nodo_id=datos["nodo_id"],
             temperatura=datos["temperatura"],
             humedad=datos["humedad"],
             bateria=datos["bateria"],

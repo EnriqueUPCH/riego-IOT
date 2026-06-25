@@ -12,6 +12,8 @@ class Telemetria(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
+    nodo_id = Column(Integer)
+
     temperatura = Column(Float)
     humedad = Column(Float)
     bateria = Column(Float)
