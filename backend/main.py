@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 estado_actual = {
+    "nodo_id": 0,
     "temperatura": 0,
     "humedad": 0,
     "bateria": 0,
@@ -45,6 +46,7 @@ def recibir(datos: dict):
     global estado_actual
 
     estado_actual = {
+        "nodo_id": datos["nodo_id"],
         "temperatura": datos["temperatura"],
         "humedad": datos["humedad"],
         "bateria": datos["bateria"],
@@ -88,6 +90,7 @@ def obtener_historial():
         return [
             {
                 "id": r.id,
+                "nodo_id": r.nodo_id,
                 "temperatura": r.temperatura,
                 "humedad": r.humedad,
                 "bateria": r.bateria,
